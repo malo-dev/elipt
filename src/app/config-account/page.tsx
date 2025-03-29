@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
+import Image from "next/image";  // Import Image component from Next.js
 
-export default function ConfigAccount() {
+function ConfigAccountInner() {
   const [password, setPassword] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string>("https://res.cloudinary.com/dvnprk8f8/image/upload/v17/42997318/elipt_images_test/unnjusw4hfdeef91ay96.png");
   const [loading, setLoading] = useState(false);
@@ -21,11 +22,10 @@ export default function ConfigAccount() {
     e.preventDefault();
     setLoading(true);
     setMessage("");
-  
 
     try {
       // Configurer le compte avec l'avatar (lien) et le mot de passe
-      const configResponse = await axios.put("https://elipt-test-api.onrender.com/AppUsers/ActiveAccount/ConfigAccount", {
+      await axios.put("https://elipt-test-api.onrender.com/AppUsers/ActiveAccount/ConfigAccount", {
         email,
         token,
         avatar: avatarUrl, // Lien de l'avatar
@@ -37,8 +37,12 @@ export default function ConfigAccount() {
         // Redirection vers la page de login après la configuration réussie
         router.push("/login");
       }, 2000);
-    } catch (error: any) {
-      setMessage(error.response?.data?.message || "Une erreur est survenue.");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response) {
+        setMessage(error.response.data?.message || "Une erreur est survenue.");
+      } else {
+        setMessage("Une erreur est survenue.");
+      }
     } finally {
       setLoading(false);
     }
@@ -55,15 +59,17 @@ export default function ConfigAccount() {
         )}
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="text-center mb-4">
-            <img
+            <Image
               src={avatarUrl}
               alt="Avatar"
-              className="w-24 h-24 object-cover rounded-full"
+              width={96}
+              height={96}
+              className="object-cover rounded-full"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Lien de l'avatar</label>
+            <label className="block text-sm font-medium text-gray-700">Lien de l&apos;avatar</label>
             <input
               type="text"
               value={avatarUrl}
@@ -95,5 +101,13 @@ export default function ConfigAccount() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function ConfigAccount() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ConfigAccountInner />
+    </Suspense>
   );
 }

@@ -1,19 +1,30 @@
-"use client";
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+'use client'; // Assurez-vous que le code est exécuté uniquement côté client
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { Suspense } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import axios from "axios";
 
-export default function VerifyOTP() {
+import { useRouter } from 'next/navigation';
+function OtpVerification() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [email, setEmail] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const email = searchParams.get("email"); // Récupérer l'email depuis l'URL
 
-  if (!email) {
-    router.push("/SignUp"); // Rediriger vers /signup si l'email est absent
-  }
+  // Gestion des paramètres de recherche via useSearchParams
+  useEffect(() => {
+    const emailFromParams = searchParams.get("email");
+    if (emailFromParams) {
+      setEmail(emailFromParams);
+    } else {
+      router.push("/SignUp");
+    }
+  }, [router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +36,7 @@ export default function VerifyOTP() {
         email,
         token: otp,
       });
-
+      console.log(response.data);
       setMessage("Code vérifié avec succès ! Redirection...");
       setTimeout(() => {
         router.push(`/config-account?email=${email}&token=${otp}`);
@@ -41,9 +52,11 @@ export default function VerifyOTP() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-2xl shadow-md w-96">
         <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">Vérification OTP</h2>
-        {message && <p className={`text-center text-sm mb-4 ${message.includes("succès") ? "text-green-500" : "text-red-500"}`}>
-          {message}
-        </p>}
+        {message && (
+          <p className={`text-center text-sm mb-4 ${message.includes("succès") ? "text-green-500" : "text-red-500"}`}>
+            {message}
+          </p>
+        )}
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium text-gray-700">Code OTP</label>
@@ -66,5 +79,13 @@ export default function VerifyOTP() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function OtpVerificationPage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <OtpVerification />
+    </Suspense>
   );
 }

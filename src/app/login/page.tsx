@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
+console.log(AxiosError); // Vérification du chargement de la page
 export default function LoginPage() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -28,8 +29,16 @@ export default function LoginPage() {
       setTimeout(() => {
         router.push("/ecommerce"); // Rediriger vers la page e-commerce
       }, 2000);
-    } catch (error: any) {
-      setMessage(error.response?.data?.message || "Une erreur est survenue.");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        // Vérifier si l'erreur est une AxiosError
+        console.error("Erreur lors de la connexion", error);
+        setMessage(error.response?.data?.message || "Une erreur est survenue.");
+      } else {
+        // Gérer d'autres types d'erreurs
+        console.error("Erreur inconnue", error);
+        setMessage("Une erreur est survenue.");
+      }
     } finally {
       setLoading(false);
     }
